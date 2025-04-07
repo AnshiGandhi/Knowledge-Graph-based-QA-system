@@ -1,4 +1,9 @@
-# needed to load the REBEL model
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import scrolledtext
+import os
+import webbrowser
+
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 import math
 import torch
@@ -261,20 +266,91 @@ def save_network_html(kb, filename="network.html"):
     net.set_edge_smooth('dynamic')
     net.show(filename)
 
+# Function to handle the process when the user clicks the "Generate Graph" button.
+def on_generate_graph_click():
+    # Get the user input text
+    user_text = text_input.get("1.0", tk.END).strip()
+
+    if not user_text:
+        messagebox.showerror("Error", "Please enter some text.")
+        return
+
+    try:
+        # Generate the knowledge base
+        kb = from_text_to_kb(user_text, verbose=True)
+
+        # Save the graph to an HTML file
+        filename = "network_from_input.html"
+        save_network_html(kb, filename=filename)
+
+        # Display the graph in the default web browser
+        webbrowser.open(f"file://{os.path.abspath(filename)}")
+
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred while generating the graph: {e}")
+
+def on_generate_graph_click_url():
+    # Get the user input URLs
+    user_urls = url_input.get("1.0", tk.END).strip().splitlines()
+
+    if not user_urls:
+        messagebox.showerror("Error", "Please enter at least one URL.")
+        return
+
+    try:
+        # Generate the knowledge base
+        kb = from_urls_to_kb(user_urls, verbose=True)
+
+        # Save the graph to an HTML file
+        filename = "network_from_urls.html"
+        save_network_html(kb, filename=filename)
+
+        # Display the graph in the default web browser
+        webbrowser.open(f"file://{os.path.abspath(filename)}")
+
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred while generating the graph: {e}")
+
+
+
 if __name__ == '__main__':
 
     choice = input("How do you want to make KG? From URL or Text: ")
     if(choice == "text"):
-        text = "Hi my name is Anshi. I study at IIIT,Hyderabad."
+        root = tk.Tk()
+        root.title("Text to Knowledge Graph Generator")
+        root.geometry("800x600")  # You can adjust the window size as needed
 
-        kb = from_text_to_kb(text, verbose=True)
-        kb.print()
+        # Label for instructions
+        label = tk.Label(root, text="Enter text to generate a knowledge graph:", font=("Arial", 14))
+        label.pack(pady=10)
+
+        # Text input area (scrollable)
+        # text_input = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=80, height=10, font=("Arial", 12))
+        text_input = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=80, height=22, font=("Arial", 12))
+
+        text_input.pack(pady=10)
+
+        # Button to trigger graph generation
+        generate_button = tk.Button(root, text="Generate Graph", font=("Arial", 14), command=on_generate_graph_click)
+        generate_button.pack(pady=20)
+
+        # Start the tkinter event loop
+        root.mainloop()
 
     if(choice == "url"):
-        # news_links = ["https://journals.lww.com/md-journal/fulltext/2025/04040/mendelian_based_urolithiasis_risk_concerning_fish.1.aspx?context=latestarticles"]
-        news_links = ["https://finance.yahoo.com/news/microstrategy-bitcoin-millions-142143795.html","https://finance.yahoo.com/news/brazils-energy-minister-asks-petrobras-201522428.html"]
-        kb = from_urls_to_kb(news_links, verbose=True)
-        kb.print()
+        # For testing: "https://finance.yahoo.com/news/microstrategy-bitcoin-millions-142143795.html","https://finance.yahoo.com/news/brazils-energy-minister-asks-petrobras-201522428.html"
+        root = tk.Tk()
+        root.title("URL to Knowledge Graph Generator")
+        root.geometry("800x600")
 
-    filename = "network_3_google.html"
-    save_network_html(kb, filename=filename)
+        label = tk.Label(root, text="Enter URLs (one per line):", font=("Arial", 14))
+        label.pack(pady=10)
+
+        url_input = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=80, height=22, font=("Arial", 12))
+        url_input.pack(pady=10)
+
+        generate_button = tk.Button(root, text="Generate Graph", font=("Arial", 14), command=on_generate_graph_click_url)
+        generate_button.pack(pady=20)
+
+        root.mainloop()
